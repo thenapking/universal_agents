@@ -78,7 +78,8 @@ class Plant {
   create_trunk(){
     // check to see if the current segment is close to an attractor
     var found = false
-    while(!found){
+    let attempts = 0
+    while(!found && attempts < 1000){
       this.current.thicken()
 
       for(let a of this.attractors){
@@ -97,6 +98,7 @@ class Plant {
         this.segment_grid.add(next)
         this.current.growing = false
         this.current = next
+        attempts++
       }
     }
   }
