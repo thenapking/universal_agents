@@ -1,5 +1,5 @@
 class Plant {
-  constructor(boundary, kill_dist, max_angle) {
+  constructor(boundary, kill_dist, min_dist, max_dist, max_angle) {
     this.attractors = []
     this.attractor_grid = new Grid()
     this.segment_grid = new Grid()
@@ -8,10 +8,13 @@ class Plant {
     this.trunks = []
     this.current = null
     this.min_branch_length = 10
+    this.max_dist = max_dist
+    this.min_dist = min_dist
     this.kill_dist = kill_dist
     this.max_angle = max_angle
     this.orientations = []
     this.boundary = boundary
+    this.active = true
   }
 
   initialize(x, y, r){
@@ -72,15 +75,6 @@ class Plant {
     }
   }
 
-  draw_bezier(){
-    beginShape()
-    for (let i = this.segments.length-1; i > 0; i--){
-      let s = this.segments[i]
-      s.draw_bezier()
-    }
-    endShape()
-  }
-
   create_trunk(){
     // check to see if the current segment is close to an attractor
     var found = false
@@ -89,7 +83,7 @@ class Plant {
 
       for(let a of this.attractors){
         var d = p5.Vector.dist(this.current.position, a.position)
-        if(d < max_dist){
+        if(d < this.max_dist){
           found = true
           break
         }
@@ -121,18 +115,21 @@ class Plant {
       
     }
     // make new branches from branches that are close to attractors
-    this.grow_towards_attractor()
+    this.grow_towards_attractor() 
     this.remove_inactive_attractors()
+    if(this.attractors.length == 0 || this.segments.length > 1000){
+      this.active = false
+    }
   }
 
   get_closest_segment(attractor){
     let closest_segment = null
-    let record = max_dist
+    let record = this.max_dist
 
     for(let j=0; j<this.segments.length; j++){
       let segment = this.segments[j]
       let d = p5.Vector.dist(attractor.position, segment.position)
-      if (d < min_dist){
+      if (d < this.min_dist){
         attractor.segments.push(closest_segment)
         closest_segment = null // reset the closest_segment
         break;
@@ -160,7 +157,6 @@ class Plant {
       }
 
       if (segment.count > 0){
-
         segment.direction.div(segment.count+1)
         let new_segment = segment.next()
         this.segments.push(new_segment)
@@ -169,9 +165,9 @@ class Plant {
         segment.growing = false
         segment.reset()
         new_segment.thicken()
-
       }
     }
+
   }
 
   remove_inactive_attractors(){
